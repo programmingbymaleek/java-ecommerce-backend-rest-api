@@ -1,11 +1,17 @@
-HELP.md
-.gradle
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
+### Build Output ###
+/build/
+.gradle/
+*.class
+*.log
 
-### STS ###
+### IDEs ###
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Spring Tool Suite (STS)
 .apt_generated
 .classpath
 .factorypath
@@ -13,25 +19,28 @@ build/
 .settings
 .springBeans
 .sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
-
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
+# VS Code
 .vscode/
+
+### OS-Specific ###
+.DS_Store
+Thumbs.db
+
+### Gradle Wrapper ###
+gradle-app.setting
+gradle.properties
+.gradle-cache/
+
+### Test Reports ###
+/build/reports/
+/build/test-results/
+/test-output/
+HELP.md

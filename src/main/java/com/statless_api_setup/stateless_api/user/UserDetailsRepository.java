@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserDetailsRepository extends JpaRepository<UserEntity,Long> {
     //Used by UserDetailsService to Authenticate users
-    UserEntity findByUserName(String username);
+    UserEntity findByUsername(String username);
 }
