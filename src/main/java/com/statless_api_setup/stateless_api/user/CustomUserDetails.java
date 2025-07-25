@@ -25,8 +25,9 @@ public class CustomUserDetails implements UserDetails {
      */
     @Override
     public String getPassword() {
-        return "";
+        return user.getPassword();
     }
+
 
     /**
      * Returns the username used to authenticate the user. Cannot return
@@ -34,11 +35,11 @@ public class CustomUserDetails implements UserDetails {
      *
      * @return the username (never <code>null</code>)
      */
+
     @Override
     public String getUsername() {
-        return "";
+        return user.getUsername();
     }
-
     /**
      * Indicates whether the user's account has expired. An expired account cannot be
      * authenticated.

@@ -5,8 +5,11 @@ import jakarta.persistence.*;
 
 
 @Entity
+@Table(name = "user_entity")
 public class UserEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long Id;
     private String username;
     private String password;
