@@ -13,14 +13,14 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -32,8 +32,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.UUID;
-
-import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 public class JWTAuthentication {
@@ -104,12 +102,21 @@ public class JWTAuthentication {
 
     /**
      *
-     * JWT DEcoder
+     * JWT Decoder
      */
 
     @Bean
     public JwtDecoder jwtDecoder(RSAKey rsaKey) throws JOSEException {
         return NimbusJwtDecoder.withPublicKey(rsaKey.toRSAPublicKey()).build();
+    }
+
+    /**
+     * (4a) Encoder (Auth Server uses this to ISSUE tokens)
+     */
+
+    @Bean
+    public JwtEncoder  jwtEncoder(JWKSource<SecurityContext> jwkSource){
+        return  new NimbusJwtEncoder(jwkSource);
     }
 
 
@@ -123,6 +130,7 @@ public class JWTAuthentication {
     @Bean
     public WebMvcConfigurer corsConfigure() {
         return new WebMvcConfigurer() {
+
             /**
              * Configure "global" cross-origin request processing. The configured CORS
              * mappings apply to annotated controllers, functional endpoints, and static
