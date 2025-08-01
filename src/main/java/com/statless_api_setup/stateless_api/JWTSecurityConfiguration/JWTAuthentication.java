@@ -1,5 +1,10 @@
 package com.statless_api_setup.stateless_api.JWTSecurityConfiguration;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,12 +17,21 @@ import org.springframework.security.config.annotation.web.configurers.oauth2.ser
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.UUID;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -39,6 +53,71 @@ public class JWTAuthentication {
 //        .headers(headers -> headers.frameOptions().disable()); // allow H2 to render in iframe
         return http.build();
     }
+
+    /**Steps after setting up my "http.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));"
+     * <p>(1) Generate keypair
+     *
+     * <p>(2) Build JWK
+     * <p>(3) JWK source
+     * <p>(4a) Encoder (Auth Server uses this to ISSUE tokens)
+     * <p>(4b) Decoder (Resource Server uses this to VERIFY tokens; or Auth Server verifies inbound JWTs)
+     *
+     */
+
+
+    @Bean
+    public KeyPair keyPair(){
+        try{
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+            keyPairGenerator.initialize(2048);
+            return keyPairGenerator.generateKeyPair();
+        }catch(NoSuchAlgorithmException e){
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
+     *
+     * (2) Build JWK
+     *
+     */
+    @Bean
+    public RSAKey rsaKey(KeyPair keyPair) {
+        RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
+        RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
+        return new RSAKey.Builder(publicKey)
+                .privateKey(privateKey)
+                .keyID(UUID.randomUUID().toString())
+                .build();
+    }
+
+    /**
+     *
+     * JWK source
+     */
+
+    @Bean
+    public JWKSource<SecurityContext> jwkSource(RSAKey rsaKey) {
+        JWKSet jwkSet = new JWKSet(rsaKey);
+        return (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
+    }
+
+    /**
+     *
+     * JWT DEcoder
+     */
+
+    @Bean
+    public JwtDecoder jwtDecoder(RSAKey rsaKey) throws JOSEException {
+        return NimbusJwtDecoder.withPublicKey(rsaKey.toRSAPublicKey()).build();
+    }
+
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
 
     //configure cors ::Global Configuration
     @Bean
@@ -69,9 +148,9 @@ public class JWTAuthentication {
         };
     }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+
+
 }
+
+
 
