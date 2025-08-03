@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 @Service
 public class JwtService {
@@ -19,6 +20,7 @@ public class JwtService {
                     .collect(Collectors.joining(" "));
             JwtClaimsSet claims = JwtClaimsSet.builder()
                     .issuer("Wima Global Enterprise")
+                    .audience(List.of("stateless-api"))
                     .issuedAt(now)
                     .expiresAt(now.plus(ttl))
                     .subject(subject)

@@ -18,10 +18,11 @@ import org.springframework.security.config.annotation.web.configurers.HeadersCon
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
+import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.cors.CorsConfiguration;
@@ -32,6 +33,7 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.List;
 import java.util.UUID;
 
 @Configuration
@@ -40,8 +42,8 @@ public class JWTAuthentication {
     @Order(SecurityProperties.BASIC_AUTH_ORDER)
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests((requests) -> requests
-                .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers("/onlyAdmins").hasRole("ADMIN")
+                .requestMatchers("/h2-console/**","/getAllTodos","/login","testAuth").permitAll()
+                .requestMatchers("/onlyAdmins").hasAuthority("SCOPE_ROLE_ADMIN")
                 .anyRequest().authenticated());
         //disable session as well state it as stateless for a restAPI.
         http.sessionManagement(session ->
@@ -106,8 +108,29 @@ public class JWTAuthentication {
 
     @Bean
     public JwtDecoder jwtDecoder(RSAKey rsaKey) throws JOSEException {
-        return NimbusJwtDecoder.withPublicKey(rsaKey.toRSAPublicKey()).build();
+        NimbusJwtDecoder decoder = NimbusJwtDecoder
+                .withPublicKey(rsaKey.toRSAPublicKey())
+                .build();
+
+        // Expected values
+        String expectedIssuer = "Wima Global Enterprise"; //
+        String expectedAudience = "stateless-api";        //
+
+        // Validators
+        OAuth2TokenValidator<Jwt> issuerValidator =
+                JwtValidators.createDefaultWithIssuer(expectedIssuer);
+
+        OAuth2TokenValidator<Jwt> audienceValidator = jwt -> {
+            List<String> aud = jwt.getAudience();
+            return (aud != null && aud.contains(expectedAudience))
+                    ? OAuth2TokenValidatorResult.success()
+                    : OAuth2TokenValidatorResult.failure(new OAuth2Error("invalid_token", "Invalid audience", null));
+        };
+
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(issuerValidator, audienceValidator));
+        return decoder;
     }
+
 
     /**
      * (4a) Encoder (Auth Server uses this to ISSUE tokens)
@@ -130,6 +153,7 @@ public class JWTAuthentication {
     }
 
     //configure cors ::Global Configuration
+//configure cors ::Global Configuration
     @Bean
     public WebMvcConfigurer corsConfigure() {
         return new WebMvcConfigurer() {
@@ -149,6 +173,7 @@ public class JWTAuthentication {
              * @see CorsConfiguration#combine(CorsConfiguration)
              * @since 4.2
              */
+
 
             public void addCorsMappings(CorsRegistry registry) {
                 WebMvcConfigurer.super.addCorsMappings(registry);
