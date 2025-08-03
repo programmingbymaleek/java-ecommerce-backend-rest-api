@@ -1,6 +1,7 @@
 package com.statless_api_setup.stateless_api.user;
 
 
+import com.statless_api_setup.stateless_api.roles.RoleEntities;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
@@ -23,6 +24,13 @@ public class UserEntity {
     @Column(nullable = false)
     private String address;
     private boolean enabled = true;
+
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
     private Set<RoleEntities> roles = new HashSet<>();
 
 

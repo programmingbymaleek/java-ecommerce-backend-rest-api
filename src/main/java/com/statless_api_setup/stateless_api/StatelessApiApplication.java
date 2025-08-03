@@ -10,8 +10,8 @@ public class StatelessApiApplication {
 		SpringApplication.run(StatelessApiApplication.class, args);
 		//for testing purposes
 		//creating a BcrptPasswordEncoder
-		System.out.println(new BCryptPasswordEncoder().encode("admin"));
-		System.out.println(new BCryptPasswordEncoder().encode("user"));
+		System.out.println("admin:: "+new BCryptPasswordEncoder().encode("admin"));
+		System.out.println("user:: "+new BCryptPasswordEncoder().encode("user"));
 	}
 
 }

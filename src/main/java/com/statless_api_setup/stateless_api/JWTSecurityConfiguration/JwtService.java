@@ -1,5 +1,4 @@
 package com.statless_api_setup.stateless_api.JWTSecurityConfiguration;
-
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;

@@ -1,5 +1,4 @@
 package com.statless_api_setup.stateless_api.login;
-
 import com.statless_api_setup.stateless_api.JWTSecurityConfiguration.JwtService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -7,9 +6,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.time.Duration;
 
 @RestController
@@ -20,7 +17,6 @@ public class LoginController {
         this.authManager = authManager;
         this.jwtService = jwtService;
     }
-
     @PostMapping(path = "/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest response){
         Authentication auth = authManager.authenticate(new UsernamePasswordAuthenticationToken(response.getEmail(),response.getPassword()));

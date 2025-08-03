@@ -1,4 +1,4 @@
-package com.statless_api_setup.stateless_api.user;
+package com.statless_api_setup.stateless_api.roles;
 
 import jakarta.persistence.*;
 

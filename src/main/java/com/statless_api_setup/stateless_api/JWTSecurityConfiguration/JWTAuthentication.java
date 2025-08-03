@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -63,8 +62,6 @@ public class JWTAuthentication {
      * <p>(4b) Decoder (Resource Server uses this to VERIFY tokens; or Auth Server verifies inbound JWTs)
      *
      */
-
-
     @Bean
     public KeyPair keyPair(){
         try{
@@ -121,7 +118,6 @@ public class JWTAuthentication {
         return  new NimbusJwtEncoder(jwkSource);
     }
 
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -132,8 +128,6 @@ public class JWTAuthentication {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
-
 
     //configure cors ::Global Configuration
     @Bean
