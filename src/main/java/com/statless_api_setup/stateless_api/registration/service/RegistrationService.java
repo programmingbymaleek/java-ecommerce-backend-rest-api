@@ -1,5 +1,4 @@
 package com.statless_api_setup.stateless_api.registration.service;
-
 import com.statless_api_setup.stateless_api.exceptions.InvalidOperationException;
 import com.statless_api_setup.stateless_api.registration.dto.VendorRegistrationRequest;
 import com.statless_api_setup.stateless_api.roles.RoleEntities;
@@ -12,12 +11,10 @@ import com.statless_api_setup.stateless_api.vendor.Vendor;
 import com.statless_api_setup.stateless_api.vendor.VendorRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
 
 
 import java.util.Optional;
 
-@Service
 public class RegistrationService {
     UserRepository userRepository;
     RoleRepository roleRepository;
@@ -37,13 +34,13 @@ public class RegistrationService {
     @Transactional
     public void registerVendor(VendorRegistrationRequest vendorRegistrationRequest) {
         Optional<UserEntity> existingUser = userRepository.findByEmail(vendorRegistrationRequest.email());
-        Optional<Vendor> existingBusinessName = vendorRepository.findByBusinessName(vendorRegistrationRequest.businessId());
+        Optional<Vendor> existingBusinessId = vendorRepository.findByBusinessId(vendorRegistrationRequest.businessId());
         Optional<Store> existingStore = storeRepository.findByStoreName(vendorRegistrationRequest.storeName());
 
-        if (existingStore.isPresent()) {
+        if(existingStore.isPresent()){
             throw new InvalidOperationException("Store Name already taken, Please Try another name");
         }
-        if (existingBusinessName.isPresent()) {
+        if(existingBusinessId.isPresent()){
             throw new InvalidOperationException("Business Id already Exit");
         }
 
@@ -61,16 +58,16 @@ public class RegistrationService {
             }
             user.getRoles().add(vendorRole);
             userRepository.save(user); // update user role as well
-        } else {
+        }else{
             //create a new User
-            user = new UserEntity();
-            user.setEmail(vendorRegistrationRequest.email());
-            user.setAddress(vendorRegistrationRequest.address());
-            user.setPassword(new BCryptPasswordEncoder().encode(vendorRegistrationRequest.password()));
-            user.getRoles().add(vendorRole);
-            user.setFirstname(vendorRegistrationRequest.firstname());
-            user.setLastname(vendorRegistrationRequest.lastname());
-            user = userRepository.save(user);
+             user = new UserEntity();
+             user.setEmail(vendorRegistrationRequest.email());
+             user.setAddress(vendorRegistrationRequest.address());
+             user.setPassword(new BCryptPasswordEncoder().encode(vendorRegistrationRequest.password()));
+             user.getRoles().add(vendorRole);
+             user.setFirstname(vendorRegistrationRequest.firstname());
+             user.setLastname(vendorRegistrationRequest.lastname());
+             user = userRepository.save(user);
         }
         //create new Vendor
         Vendor vendor = new Vendor();
@@ -81,24 +78,23 @@ public class RegistrationService {
         store.setStoreName(vendorRegistrationRequest.storeName());
         store.setDescription(vendorRegistrationRequest.description());
         store.setVendor(vendor);
-        store.setSlug(generateUniqueSlug(vendorRegistrationRequest.storeName()));
+        store.setSlug("");
         store.setLogoUrl("");
         //now remember to set vendor entity with details from store created.
         vendor.setStore(store); // link both ways.
         vendorRepository.save(vendor); // this will cascade store since we set cascade =All
     }
 
-    private String generateUniqueSlug(String baseName) {
+    private String generateUniqueSlug(String baseName){
         String slug = generateSlug(baseName);
         String baseSlug = slug;
         int counter = 1;
-        while (storeRepository.existBySlug(slug)) {
-            slug = baseSlug + "-" + counter++;
+        while (storeRepository.existsBySlug(slug)){
+            slug = baseSlug+"-"+counter++;
         }
         return slug;
     }
-
-    private String generateSlug(String input) {
+    private String generateSlug(String input){
         return input.toLowerCase()
                 .trim()
                 .replaceAll("[^a-z0-9\\s-]", "")

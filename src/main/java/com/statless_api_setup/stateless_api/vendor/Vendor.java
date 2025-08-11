@@ -25,7 +25,12 @@ public class Vendor {
     public void setUser(UserEntity user) {
         this.user = user;
     }
-    //can also be business name from CAC
+
+    /**
+     * can also be business name from CAC<br>
+      * But for now we will use the business Id
+     */
+
     public String getBusinessId() {
         return businessId;
     }
