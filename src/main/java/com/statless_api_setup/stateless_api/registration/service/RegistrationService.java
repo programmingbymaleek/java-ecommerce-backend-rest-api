@@ -34,13 +34,13 @@ public class RegistrationService {
     @Transactional
     public void registerVendor(VendorRegistrationRequest vendorRegistrationRequest) {
         Optional<UserEntity> existingUser = userRepository.findByEmail(vendorRegistrationRequest.email());
-        Optional<Vendor> existingBusinessName = vendorRepository.findByBusinessName(vendorRegistrationRequest.businessId());
+        Optional<Vendor> existingBusinessId = vendorRepository.findByBusinessId(vendorRegistrationRequest.businessId());
         Optional<Store> existingStore = storeRepository.findByStoreName(vendorRegistrationRequest.storeName());
 
         if(existingStore.isPresent()){
             throw new InvalidOperationException("Store Name already taken, Please Try another name");
         }
-        if(existingBusinessName.isPresent()){
+        if(existingBusinessId.isPresent()){
             throw new InvalidOperationException("Business Id already Exit");
         }
 
@@ -89,7 +89,7 @@ public class RegistrationService {
         String slug = generateSlug(baseName);
         String baseSlug = slug;
         int counter = 1;
-        while (storeRepository.existBySlug(slug)){
+        while (storeRepository.existsBySlug(slug)){
             slug = baseSlug+"-"+counter++;
         }
         return slug;
