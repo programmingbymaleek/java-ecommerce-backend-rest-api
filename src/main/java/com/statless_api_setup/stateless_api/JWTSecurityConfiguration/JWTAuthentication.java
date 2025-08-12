@@ -42,8 +42,9 @@ public class JWTAuthentication {
     @Order(SecurityProperties.BASIC_AUTH_ORDER)
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests((requests) -> requests
-                .requestMatchers("/h2-console/**","/getAllTodos","/login","testAuth").permitAll()
+                .requestMatchers("/h2-console/**","/getAllTodos","/login","testAuth","vendor/register").permitAll()
                 .requestMatchers("/onlyAdmins").hasAuthority("SCOPE_ROLE_ADMIN")
+                .requestMatchers("/vendor/**").hasAuthority("SCOPE_ROLE_VENDOR")
                 .anyRequest().authenticated());
         //disable session as well state it as stateless for a restAPI.
         http.sessionManagement(session ->
