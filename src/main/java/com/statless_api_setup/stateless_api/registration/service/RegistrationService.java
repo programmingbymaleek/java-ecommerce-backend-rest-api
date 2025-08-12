@@ -11,10 +11,13 @@ import com.statless_api_setup.stateless_api.vendor.Vendor;
 import com.statless_api_setup.stateless_api.vendor.VendorRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
 
 
 import java.util.Optional;
 
+
+@Service
 public class RegistrationService {
     UserRepository userRepository;
     RoleRepository roleRepository;
@@ -32,7 +35,7 @@ public class RegistrationService {
     }
 
     @Transactional
-    public void registerVendor(VendorRegistrationRequest vendorRegistrationRequest) {
+    public UserEntity registerVendor(VendorRegistrationRequest vendorRegistrationRequest) {
         Optional<UserEntity> existingUser = userRepository.findByEmail(vendorRegistrationRequest.email());
         Optional<Vendor> existingBusinessId = vendorRepository.findByBusinessId(vendorRegistrationRequest.businessId());
         Optional<Store> existingStore = storeRepository.findByStoreName(vendorRegistrationRequest.storeName());
@@ -78,11 +81,12 @@ public class RegistrationService {
         store.setStoreName(vendorRegistrationRequest.storeName());
         store.setDescription(vendorRegistrationRequest.description());
         store.setVendor(vendor);
-        store.setSlug("");
+        store.setSlug(generateUniqueSlug(vendorRegistrationRequest.storeName()));
         store.setLogoUrl("");
         //now remember to set vendor entity with details from store created.
         vendor.setStore(store); // link both ways.
         vendorRepository.save(vendor); // this will cascade store since we set cascade =All
+        return  user;
     }
 
     private String generateUniqueSlug(String baseName){

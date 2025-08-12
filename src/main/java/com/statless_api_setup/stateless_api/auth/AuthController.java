@@ -1,4 +1,4 @@
-package com.statless_api_setup.stateless_api.auth.controller;
+package com.statless_api_setup.stateless_api.auth;
 
 import com.statless_api_setup.stateless_api.JWTSecurityConfiguration.JwtService;
 import com.statless_api_setup.stateless_api.refreshTokenConfig.RefreshTokenService;
