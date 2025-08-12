@@ -14,11 +14,11 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 import java.util.Map;
-
 
 
 @RestController
@@ -60,19 +60,24 @@ public class AuthController {
         Authentication auth = authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(req.username(), req.password())
         );
+        // Step 2: Load the user from DB (to get the ID and roles)
+        var user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // Step 2: Generate Access Token
+        // Step 3: Generate Access Token
         String accessToken = jwtService.issueAccessToken(
                 auth.getName(),
+                user.getId(),
                 auth.getAuthorities(),
                 Duration.ofMinutes(15) // e.g., 15-minute TTL for access token
         );
 
-        // Step 3: Generate Refresh Token (this will be done with a separate service)
-        var user = userRepository.findByEmail(auth.getName()).orElseThrow();
+
+
+        // Step 4: Generate Refresh Token (this will be done with a separate service)
         String refreshToken = refreshTokenService.createRefreshToken(user, Duration.ofDays(14)); // Store for 14 days
 
-        // Step 4: Send the Refresh Token as an HttpOnly cookie
+        // Step 5: Send the Refresh Token as an HttpOnly cookie
         ResponseCookie cookie = ResponseCookie.from("REFRESH_TOKEN", refreshToken)
                 .httpOnly(true)
                 .secure(false) // Set to true for production (HTTPS)
@@ -82,9 +87,10 @@ public class AuthController {
                 .build();
         res.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        // Step 5: Return the Access Token in the response body
+        // Step 6: Return the Access Token in the response body
         return ResponseEntity.ok(new TokenResponse(accessToken, "Bearer", 900));
     }
+
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestParam String username, HttpServletResponse res) {
         userRepository.findByEmail(username).ifPresent(user -> {
@@ -119,6 +125,7 @@ public class AuthController {
             // Generate new access token
             String accessToken = jwtService.issueAccessToken(
                     rotated.user().getEmail(),
+                    rotated.user().getId(),
                     rotated.user().getRoles().stream()
                             .map(r -> new SimpleGrantedAuthority("ROLE_" + r.getName()))
                             .toList(),

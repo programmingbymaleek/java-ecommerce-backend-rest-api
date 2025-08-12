@@ -1,6 +1,7 @@
 package com.statless_api_setup.stateless_api.registration.controller;
 import com.statless_api_setup.stateless_api.registration.dto.VendorRegistrationRequest;
 import com.statless_api_setup.stateless_api.registration.service.RegistrationService;
+import com.statless_api_setup.stateless_api.roles.RoleEntities;
 import com.statless_api_setup.stateless_api.user.UserEntity;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -33,15 +36,13 @@ public class VendorRegistrationController {
 
 
 
+
     public VendorRegistrationController(RegistrationService registrationService, AuthService authService ) {
         this.registrationService = registrationService;
         this.authService =authService;
+
     }
-    @PostMapping(name = "registration")
-    public ResponseEntity<?> registerVendors(@Valid @RequestBody VendorRegistrationRequest request){
-        registrationService.registerVendor(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
+
 
     @PostMapping("/register")
     public ResponseEntity<?> registerVendor(@Valid @RequestBody VendorRegistrationRequest request,
@@ -57,8 +58,16 @@ public class VendorRegistrationController {
                 response
         );
 
+        // 3. Extract roles from the user
+        var roleNames = user.getRoles().stream()
+                .map(RoleEntities::getName)  // Assuming RoleEntities has getName()
+                .toList();
+        Map<String, Object> responseBody = new HashMap<>();
+        responseBody.put("token", tokenResponse);
+        responseBody.put("role",roleNames);
+
         // 201 + token body; refresh cookie already set by AuthService
-        return ResponseEntity.status(201).body(tokenResponse);
+        return ResponseEntity.status(201).body(responseBody);
     }
 
 

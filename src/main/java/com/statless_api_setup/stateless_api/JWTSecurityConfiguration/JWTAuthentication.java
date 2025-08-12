@@ -9,13 +9,17 @@ import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
@@ -23,48 +27,83 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.*;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.List;
-import java.util.UUID;
+import java.time.Instant;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Configuration
 public class JWTAuthentication {
     @Bean
     @Order(SecurityProperties.BASIC_AUTH_ORDER)
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests((requests) -> requests
-                .requestMatchers("/h2-console/**","/getAllTodos","/login","testAuth","vendor/register").permitAll()
-                .requestMatchers("/onlyAdmins").hasAuthority("SCOPE_ROLE_ADMIN")
-                .requestMatchers("/vendor/**").hasAuthority("SCOPE_ROLE_VENDOR")
-                .anyRequest().authenticated());
-        //disable session as well state it as stateless for a restAPI.
-        http.sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        http.headers(headers-> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
-        http.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
-        http.csrf(AbstractHttpConfigurer::disable);
-//        .headers(headers -> headers.frameOptions().disable()); // allow H2 to render in iframe
+        http
+                .authorizeHttpRequests(req -> req
+                        .requestMatchers("/h2-console/**", "/getAllTodos", "/login", "testAuth", "/vendor/register").permitAll()
+                        .requestMatchers("/onlyAdmins").hasRole("ADMIN")   // now role-based
+                        .requestMatchers("/vendor/**").hasRole("VENDOR")   // now role-based
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .headers(h -> h.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
+                .csrf(AbstractHttpConfigurer::disable)
+                .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt
+                        .jwtAuthenticationConverter(jwtAuthenticationConverter())
+                ));
         return http.build();
     }
 
-    /**Steps after setting up my "http.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));"
-     * <p>(1) Generate keypair
-     *
-     * <p>(2) Build JWK
-     * <p>(3) JWK source
-     * <p>(4a) Encoder (Auth Server uses this to ISSUE tokens)
-     * <p>(4b) Decoder (Resource Server uses this to VERIFY tokens; or Auth Server verifies inbound JWTs)
-     *
-     */
+    // --- Custom JWT -> Authentication converter ---
+    @Bean
+    public Converter<Jwt, ? extends AbstractAuthenticationToken> jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter scopes = new JwtGrantedAuthoritiesConverter(); // keeps SCOPE_* if you still use "scope"
+
+        return jwt -> {
+            // 1) Authorities from roles[] claim (ROLE_*) + optional scopes
+            var roleAuthorities = Optional.ofNullable(jwt.getClaimAsStringList("roles"))
+                    .orElse(List.of()).stream()
+                    .filter(r -> r.startsWith("ROLE_"))
+                    .map(SimpleGrantedAuthority::new)
+                    .toList();
+
+            Collection<GrantedAuthority> scopeAuthorities = scopes.convert(jwt); // may be empty
+
+            var authorities = Stream.concat(roleAuthorities.stream(), scopeAuthorities.stream())
+                    .distinct()
+                    .toList();
+
+            // 2) Principal with id (uid) + email (sub)
+            Long uid = extractUid(jwt);
+            var principal = new JwtPrincipal(uid, jwt.getSubject());
+
+            return new UsernamePasswordAuthenticationToken(principal, "N/A", authorities);
+        };
+    }
+
+
+
+    private static Long extractUid(Jwt jwt) {
+        Object raw = jwt.getClaim("uid");
+        if (raw == null) return null;
+        if (raw instanceof Number n) return n.longValue();
+        return Long.valueOf(raw.toString());
+    }
+
+    // ---- your existing key/jwk/encoder/decoder beans stay the same ----
+
     @Bean
     public KeyPair keyPair(){
         try{
@@ -76,11 +115,6 @@ public class JWTAuthentication {
         }
     }
 
-    /**
-     *
-     * (2) Build JWK
-     *
-     */
     @Bean
     public RSAKey rsaKey(KeyPair keyPair) {
         RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
@@ -91,21 +125,11 @@ public class JWTAuthentication {
                 .build();
     }
 
-    /**
-     *
-     * JWK source
-     */
-
     @Bean
     public JWKSource<SecurityContext> jwkSource(RSAKey rsaKey) {
         JWKSet jwkSet = new JWKSet(rsaKey);
         return (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
     }
-
-    /**
-     *
-     * JWT Decoder
-     */
 
     @Bean
     public JwtDecoder jwtDecoder(RSAKey rsaKey) throws JOSEException {
@@ -113,11 +137,9 @@ public class JWTAuthentication {
                 .withPublicKey(rsaKey.toRSAPublicKey())
                 .build();
 
-        // Expected values
-        String expectedIssuer = "Wima Global Enterprise"; //
-        String expectedAudience = "stateless-api";        //
+        String expectedIssuer = "Wima Global Enterprise";
+        String expectedAudience = "stateless-api";
 
-        // Validators
         OAuth2TokenValidator<Jwt> issuerValidator =
                 JwtValidators.createDefaultWithIssuer(expectedIssuer);
 
@@ -132,14 +154,9 @@ public class JWTAuthentication {
         return decoder;
     }
 
-
-    /**
-     * (4a) Encoder (Auth Server uses this to ISSUE tokens)
-     */
-
     @Bean
-    public JwtEncoder  jwtEncoder(JWKSource<SecurityContext> jwkSource){
-        return  new NimbusJwtEncoder(jwkSource);
+    public JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource){
+        return new NimbusJwtEncoder(jwkSource);
     }
 
     @Bean
@@ -147,47 +164,19 @@ public class JWTAuthentication {
         return new BCryptPasswordEncoder();
     }
 
-    // Config to expose AuthenticationManager
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    //configure cors ::Global Configuration
-//configure cors ::Global Configuration
     @Bean
     public WebMvcConfigurer corsConfigure() {
         return new WebMvcConfigurer() {
-
-            /**
-             * Configure "global" cross-origin request processing. The configured CORS
-             * mappings apply to annotated controllers, functional endpoints, and static
-             * resources.
-             * <p>Annotated controllers can further declare more fine-grained config via
-             * {@link CrossOrigin @CrossOrigin}.
-             * In such cases "global" CORS configuration declared here is
-             * {@link CorsConfiguration#combine(CorsConfiguration) combined}
-             * with local CORS configuration defined on a controller method.
-             *
-             * @param registry
-             * @see CorsRegistry
-             * @see CorsConfiguration#combine(CorsConfiguration)
-             * @since 4.2
-             */
-
-
             public void addCorsMappings(CorsRegistry registry) {
-                WebMvcConfigurer.super.addCorsMappings(registry);
                 registry.addMapping("/**")
                         .allowedMethods("*")
                         .allowedOrigins("http://localhost:3000");
             }
         };
     }
-
-
-
 }
-
-
-

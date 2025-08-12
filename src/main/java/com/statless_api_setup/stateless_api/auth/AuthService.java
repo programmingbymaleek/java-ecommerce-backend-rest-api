@@ -2,6 +2,7 @@ package com.statless_api_setup.stateless_api.auth;
 
 import com.statless_api_setup.stateless_api.JWTSecurityConfiguration.JwtService;
 import com.statless_api_setup.stateless_api.refreshTokenConfig.RefreshTokenService;
+import com.statless_api_setup.stateless_api.roles.RoleEntities;
 import com.statless_api_setup.stateless_api.user.UserEntity;
 import com.statless_api_setup.stateless_api.user.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,6 +27,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final RefreshTokenService refreshTokenService;
 
+
     public AuthService(AuthenticationManager authManager,
                        JwtService jwtService,
                        UserRepository userRepository,
@@ -34,6 +36,7 @@ public class AuthService {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.refreshTokenService = refreshTokenService;
+//        this.roleEntities= roleEntities;
     }
 
     /**
@@ -52,6 +55,7 @@ public class AuthService {
         // 3) Issue short-lived access token (e.g., 15 minutes)
         String accessToken = jwtService.issueAccessToken(
                 user.getEmail(),
+                user.getId(),
                 auth.getAuthorities(),
                 Duration.ofMinutes(15)
         );
