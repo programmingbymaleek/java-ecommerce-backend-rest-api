@@ -59,12 +59,12 @@ public class VendorRegistrationController {
         );
 
         // 3. Extract roles from the user
-        var roleNames = user.getRoles().stream()
-                .map(RoleEntities::getName)  // Assuming RoleEntities has getName()
-                .toList();
+//        var roleNames = user.getRoles().stream()
+//                .map(RoleEntities::getName)  // Assuming RoleEntities has getName()
+//                .toList();
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("token", tokenResponse);
-        responseBody.put("role",roleNames);
+//        responseBody.put("role",roleNames);
 
         // 201 + token body; refresh cookie already set by AuthService
         return ResponseEntity.status(201).body(responseBody);
