@@ -102,7 +102,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(false) // Set to true for production (HTTPS)
                 .sameSite("Lax") // Adjust for CSRF based on your needs
-                .path("/auth/refresh")
+                .path("/refresh")
                 .maxAge(0) // This indicates the cookie should be deleted
                 .build();
         res.addHeader(HttpHeaders.SET_COOKIE, clearCookie.toString());

@@ -9,6 +9,14 @@ Insert into users (email,password, firstname,lastname,address,enabled) values ('
 --assign roles to wisdom and john
 Insert into user_roles (user_id,role_id) values (1,1),(1,2),(2,2);
 
+INSERT INTO categories (name, slug, parent_id) VALUES
+('Men', 'men', NULL),                                -- id 1
+('Men / Shoes', 'men-shoes', 1),                     -- id 2
+('Men / Pants', 'men-pants', 1),                     -- id 3
+('Women', 'women', NULL),                            -- id 4
+('Women / Shoes', 'women-shoes', 4);                 -- id 5
+
+
 
 
 

@@ -67,6 +67,10 @@ public class Store {
         return active;
     }
 
+    public Long getId() {
+        return id;
+    }
+
     public void setActive(boolean active) {
         this.active = active;
     }
