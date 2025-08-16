@@ -20,14 +20,14 @@ repositories {
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-web")
-	implementation("org.springframework.boot:spring-boot-starter-jdbc")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.flywaydb:flyway-core")
 	runtimeOnly("org.postgresql:postgresql")
 	implementation("jakarta.validation:jakarta.validation-api:3.0.2")
 	implementation("org.hibernate.validator:hibernate-validator:8.0.1.Final")
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
-	implementation("com.h2database:h2")
+//	implementation("com.h2database:h2") // i dont want it to run on prod just on local
+	runtimeOnly("com.h2database:h2")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.testcontainers:junit-jupiter")
 	testImplementation("org.testcontainers:postgresql")

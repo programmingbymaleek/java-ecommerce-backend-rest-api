@@ -9,18 +9,6 @@ spring:
   flyway:
     enabled: true
 
-#---
-#spring:
-#  config:
-#    activate:
-#      on-profile: local
-#  datasource:
-#    url: jdbc:postgresql://localhost:5432/app_local
-#    username: local
-#    password: local
-#  jpa:
-#    hibernate.ddl-auto: create-drop   # only for early laptop dev
-## run with: SPRING_PROFILES_ACTIVE=local
 
 ---
 spring:
@@ -34,26 +22,3 @@ spring:
   jpa:
     hibernate.ddl-auto: validate
 
-#---
-#spring:
-#  config:
-#    activate:
-#      on-profile: testing
-#  datasource:
-#    url: ${DATABASE_URL}
-#    username: ${DATABASE_USERNAME}
-#    password: ${DATABASE_PASSWORD}
-#  jpa:
-#    hibernate.ddl-auto: validate
-#
-#---
-#spring:
-#  config:
-#    activate:
-#      on-profile: prod
-#  datasource:
-#    url: ${DATABASE_URL}
-#    username: ${DATABASE_USERNAME}
-#    password: ${DATABASE_PASSWORD}
-#  jpa:
-#    hibernate.ddl-auto: validate
