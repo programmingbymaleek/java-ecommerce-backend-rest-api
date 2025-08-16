@@ -1,19 +1,12 @@
-# ---- Build stage ----
-FROM openjdk:21-jdk-slim AS build
+# First stage: Build with Gradle
+FROM gradle:8.10.1-jdk21 AS build
 WORKDIR /app
+COPY . .
+RUN gradle clean build -x test --no-daemon
 
-COPY gradlew ./
-COPY gradle/ gradle/
-COPY build.gradle settings.gradle ./
-RUN chmod +x gradlew && ./gradlew --no-daemon -q dependencies
-
-COPY src ./src
-RUN ./gradlew --no-daemon -q clean bootJar
-
-# ---- Run stage ----
-FROM openjdk:21-jre-slim
+# Second stage: Run the app
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=build /app/build/libs/*.jar app.jar
-ENV JAVA_OPTS=""
-EXPOSE 8080
-ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
