@@ -2,13 +2,16 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: none         # we let Flyway manage schema
+      ddl-auto: none
     properties:
       hibernate.format_sql: true
       hibernate.jdbc.time_zone: UTC
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: never
   flyway:
-    enabled: true
-
+    enabled: false   # <— IMPORTANT: off by default
 
 ---
 spring:
@@ -16,9 +19,15 @@ spring:
     activate:
       on-profile: develop
   datasource:
-    url: ${DATABASE_URL}
+    url: ${DATABASE_URL}          # jdbc:postgresql://host:port/db
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
   jpa:
-    hibernate.ddl-auto: validate
-
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    url: ${DATABASE_URL}
+    user: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    # baseline-on-migrate: true   # uncomment if DB already has tables

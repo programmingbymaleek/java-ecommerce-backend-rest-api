@@ -52,7 +52,7 @@ public class JWTAuthentication {
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(req -> req
-                        .requestMatchers("/h2-console/**", "/getAllTodos", "/login", "testAuth", "/vendor/register","/refresh").permitAll()
+                        .requestMatchers("/h2-console/**", "/getAllTodos", "/login", "/testAuth", "/vendor/register","/refresh").permitAll()
                         .requestMatchers("/onlyAdmins").hasRole("ADMIN")   // now role-based
                         .requestMatchers("/vendor/**").hasRole("VENDOR")   // now role-based
                         .anyRequest().authenticated()
