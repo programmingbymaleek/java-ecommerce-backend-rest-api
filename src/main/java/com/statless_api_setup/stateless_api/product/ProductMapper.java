@@ -38,5 +38,16 @@ public class ProductMapper {
         product.setCategory(category);
         return product;
     }
+
+    public void applyUpdate(Product p,UpdateProductRequest req){
+        if(req.getName()!=null)     p.setName(req.getName());
+        if(req.getActive()!=null)   p.setActive(req.getActive());
+        if(req.getCategoryId()!=null)       p.getCategory().setId(req.getCategoryId());
+        if(req.getDescription()!=null)      p.setDescription(req.getDescription());
+        if(req.getPrice()!=null)            p.setPriceCents(req.getPrice());
+        if(req.getSku()!=null)              p.setSku(req.getSku());
+        if(req.getStockQuantity()!=null)    p.setStock(req.getStockQuantity());
+        if(req.getImageUrl()!=null)         p.setImageUrl(req.getImageUrl());
+    }
 }
 

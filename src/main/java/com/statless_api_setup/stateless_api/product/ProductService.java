@@ -68,9 +68,24 @@ public class ProductService {
         storeRepo.findByIdAndVendorUserId(storeId, userId)
                 .orElseThrow(() -> new AccessDeniedException("You do not own this store"));
         Page<ProductResponse> page = productRepo
-                .findByStore_IdAndStore_Vendor_User_IdAndDeletedFalse(storeId, userId, pageable) // order fixed
+                .findByStore_IdAndStore_Vendor_User_IdAndDeletedFalse(storeId, userId, pageable)
                 .map(productMapper::toResponse);
         return PageResult.from(page, pageable);
+    }
+
+    @Transactional
+    public void updateProduct(Long userId, Long storeId, Long productId,UpdateProductRequest req){
+        //check to make sure store belongs to said user before updating the product.
+        storeRepo.findByIdAndVendorUserId(storeId,userId).orElseThrow(()->new AccessDeniedException("You do not own this store"));
+
+        //check if product is owned by the store and its in the store before update
+        if(productRepo.findByIdAndStore_Vendor_User_Id(storeId,productId).isPresent()){
+            UpdateProductRequest newRequest = new UpdateProductRequest();
+            newRequest.setName(req.getName());
+
+        }
+
+
     }
 
 }

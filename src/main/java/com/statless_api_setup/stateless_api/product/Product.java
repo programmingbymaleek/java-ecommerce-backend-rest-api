@@ -29,6 +29,7 @@ public class Product {
     @Column(columnDefinition = "TEXT") private String description;
     private boolean active = true;
     private boolean deleted = false;
+    private String imageUrl;
 
     public Long getId() {
         return id;
@@ -116,6 +117,14 @@ public class Product {
 
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }
 

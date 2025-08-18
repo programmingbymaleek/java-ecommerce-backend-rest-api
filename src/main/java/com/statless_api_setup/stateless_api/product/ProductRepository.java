@@ -23,6 +23,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // Ownership-safe list (vendor dashboard use)
     Page<Product> findByStore_IdAndStore_Vendor_User_IdAndDeletedFalse(Long storeId, Long userId, Pageable pageable);
 
+    Optional<Product> findByIdAndStore_IdAndStore_Vendor_User_Id(Long productId, Long storeId, Long userId);
+
+
     // (Optional) search by name/SKU within a store
     // @Query("""
     //   select p from Product p
