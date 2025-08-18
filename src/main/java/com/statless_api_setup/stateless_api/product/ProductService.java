@@ -2,6 +2,7 @@ package com.statless_api_setup.stateless_api.product;
 
 import com.statless_api_setup.stateless_api.category.Category;
 import com.statless_api_setup.stateless_api.category.CategoryRepository;
+import com.statless_api_setup.stateless_api.exceptions.InvalidOperationException;
 import com.statless_api_setup.stateless_api.pageResult.PageResult;
 import com.statless_api_setup.stateless_api.store.Store;
 import com.statless_api_setup.stateless_api.store.StoreRepository;
@@ -77,13 +78,27 @@ public class ProductService {
     public void updateProduct(Long userId, Long storeId, Long productId,UpdateProductRequest req){
         //check to make sure store belongs to said user before updating the product.
         storeRepo.findByIdAndVendorUserId(storeId,userId).orElseThrow(()->new AccessDeniedException("You do not own this store"));
+        Product p = productRepo.findByIdAndStore_IdAndStore_Vendor_User_Id(productId,storeId,userId).orElseThrow(()->new AccessDeniedException("Product not fount in your store"));
 
-        //check if product is owned by the store and its in the store before update
-        if(productRepo.findByIdAndStore_Vendor_User_Id(storeId,productId).isPresent()){
-            UpdateProductRequest newRequest = new UpdateProductRequest();
-            newRequest.setName(req.getName());
-
+        //normalize inputs (trim, lower slug)
+        String newSku = req.getSku() !=null ? req.getSku().trim():null;
+        String newSlug = req.getSlug() !=null ? req.getSlug().trim():null;
+        // check uniqueness if changing..
+        if(newSku !=null && !newSku.equalsIgnoreCase(p.getSku())){
+            boolean taken = productRepo.existsByStore_IdAndSkuIgnoreCaseAndIdNot(storeId,newSku,p.getId());
+            if(taken){
+                throw new InvalidOperationException("SKU already exists in this store");
+            }
+            p.setSku(newSku);
         }
+        if(newSlug !=null && !newSlug.equalsIgnoreCase(p.getSlug())){
+            boolean taken = productRepo.existsByStore_IdAndSlugIgnoreCaseAndIdNot(storeId,newSlug,p.getId());
+            if(taken){
+                throw new InvalidOperationException("Slug already exists in this store");
+            }
+            p.setSlug(newSlug);
+        }
+
 
 
     }

@@ -25,6 +25,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<Product> findByIdAndStore_IdAndStore_Vendor_User_Id(Long productId, Long storeId, Long userId);
 
+    // If you don't soft-delete:
+    boolean existsByStore_IdAndSkuIgnoreCaseAndIdNot(Long storeId, String sku, Long excludeId);
+    boolean existsByStore_IdAndSlugIgnoreCaseAndIdNot(Long storeId, String slug, Long excludeId);
+
 
     // (Optional) search by name/SKU within a store
     // @Query("""
@@ -36,8 +40,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // Page<Product> searchInStore(Long storeId, String q, Pageable pageable);
 
     // (Optional) uniqueness checks
-    boolean existsByStore_IdAndSku(Long storeId, String sku);
-    boolean existsByStore_IdAndSlug(Long storeId, String slug);
+    boolean existsByStore_IdAndSkuIgnoreCase(Long storeId, String sku);
+    boolean existsByStore_IdAndSlugIgnoreCase(Long storeId, String slug);
+
 
     // List all products across the vendor's own store(s) (no storeId needed)
     Page<Product> findByStore_Vendor_User_IdAndDeletedFalse(Long userId, Pageable pageable);
